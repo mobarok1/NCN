@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ncn/model/data_class/customer_model.dart';
+import 'package:ncn/page/subpage/customer_balance.dart';
 import 'package:ncn/page/subpage/customer_device.dart';
 import 'package:ncn/page/subpage/personal_info.dart';
 
 class CustomerDetails extends StatefulWidget {
-  final String customerId;
-  const CustomerDetails({super.key,required this.customerId});
+  final CustomerModel customer;
+  const CustomerDetails({super.key,required this.customer});
 
   @override
   State<CustomerDetails> createState() => _CustomerDetailsState();
@@ -46,9 +47,12 @@ class _CustomerDetailsState extends State<CustomerDetails> with TickerProviderSt
       body: TabBarView(
         controller: tabController,
         children: [
-          CustomerPersonalInfo(customerId: widget.customerId,),
-          CustomerDevice(customerId: widget.customerId,),
-          const Center(child: Text("Coming Soon")),
+          CustomerPersonalInfo(customerModel: widget.customer,),
+          CustomerDevice(
+            customer: widget.customer,
+            onUpdate: () {  },
+          ),
+          CustomerBalance(customerId: widget.customer.customerId)
         ],
       ),
     );

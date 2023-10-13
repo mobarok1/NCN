@@ -1,25 +1,58 @@
-import 'dart:convert';
+class CustomerModel {
+  String customerId,customerName,mobile,address,network_id,netName;
+  String deviceCASID,boxType;
+  double balance,monthlyPayment,boxPrice,feedBoxPrice,downPayment,baseRate,customerRate,paid,subsBaseRate,resellerRate,dueAmount;
+  DateTime? subsExpire,subsStart,deviceSaleDate;
 
-import 'package:ncn/model/data_class/area_model.dart';
-import 'package:ncn/model/data_class/network_model.dart';
-
-class CustomerModel{
-  String id;
-  String name;
-  String mobile;
-  String address;
-  String netId;
-
-  CustomerModel({required this.id, required this.name, required this.mobile, required this.address, required this.netId});
+  CustomerModel({
+    required this.customerId,
+    required this.customerName,
+    required this.mobile,
+    required this.deviceCASID,
+    required this.boxType,
+    required this.network_id,
+    required this.netName,
+    required this.balance,
+    required this.monthlyPayment,
+    required this.boxPrice,
+    required this.downPayment,
+    required this.baseRate,
+    required this.customerRate,
+    required this.paid,
+    required this.subsBaseRate,
+    required this.address,
+    required this.dueAmount,
+    required this.resellerRate,
+    required this.feedBoxPrice,
+    this.subsStart,
+    this.subsExpire,
+    this.deviceSaleDate
+  });
 
   factory CustomerModel.fromJSON(data){
-    data = data['\$'];
     return CustomerModel(
-        id: data["CustomerNumber"],
-        name: data["CustomerName"],
-        mobile: data["CustomerMobilePhone"],
-        address: data["CustomerAddress"]??"",
-        netId: data["NetID"],
+        customerId: data["customerId"].toString(),
+        customerName: data["customerName"],
+        mobile: data["mobile"],
+        deviceCASID: data["deviceCASID"]??"",
+        boxType: data["boxType"]??"",
+        network_id: data["network_id"].toString(),
+        balance: data["balance"].toDouble(),
+        monthlyPayment: data["monthlyPayment"].toDouble()??0.0,
+        boxPrice: data["boxPrice"].toDouble()??0.0,
+        feedBoxPrice: data["feedBoxPrice"].toDouble()??0.0,
+        downPayment: data["downPayment"].toDouble()??0.0,
+        baseRate: data["baseRate"].toDouble()??0.0,
+        customerRate: data["customerRate"].toDouble()??0.0,
+        paid: data["paid"].toDouble()??0.0,
+        dueAmount: data["dueAmount"].toDouble()??0.0,
+        subsBaseRate: data["subsBaseRate"].toDouble()??0.0,
+        subsStart: DateTime.tryParse(data["subsStart"]??""),
+        subsExpire: DateTime.tryParse(data["subsExpire"]??""),
+        deviceSaleDate: DateTime.tryParse(data["deviceSaleDate"]??""),
+        netName: data["netName"],
+        address: data["address"]??"",
+        resellerRate: data["resellerRate"].toDouble(),
     );
   }
 }

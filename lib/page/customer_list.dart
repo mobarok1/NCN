@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:ncn/main.dart';
 import 'package:ncn/model/data_class/customer_model.dart';
 import 'package:ncn/repository/customer_repository.dart';
 
@@ -22,7 +24,8 @@ class _CustomerListState extends State<CustomerList> {
       loading = true;
     });
     var formData = {
-      "search": textEditingController.text
+      "search": textEditingController.text,
+      "netid": userDataModel?.netId
     };
     customerList = await CustomerRepository.getCustomerList(formData);
 
@@ -50,11 +53,12 @@ class _CustomerListState extends State<CustomerList> {
             color: Colors.white70
           ),
           maxLength: 15,
+          cursorColor: Colors.white.withOpacity(.7),
           decoration: const InputDecoration(
             hintText: "Customer Search",
             hintStyle: TextStyle(
               color: Colors.white60
-            )
+            ),
           ),
         ),
         actions: [
@@ -75,22 +79,55 @@ class _CustomerListState extends State<CustomerList> {
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(customerList[i].name),
-                Text(customerList[i].mobile,
-                  textAlign: TextAlign.end,
+                Expanded(
+                  child: Text(customerList[i].customerName,
+                    style: const TextStyle(
+                        fontSize: 15
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: Text(customerList[i].mobile,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                        fontSize: 13
+                    ),
+                  ),
                 )
               ],
             ),
-            leading: Text(customerList[i].id.toString()),
-            subtitle: Text(customerList[i].address),
+            leading: Text(customerList[i].customerId.toString(),
+
+            ),
+            subtitle: Row(
+              children: [
+                Expanded(
+                  child: Text(customerList[i].deviceCASID,
+                    style: const TextStyle(
+                        fontSize: 11
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: Text(customerList[i].subsExpire==null?"N/A":DateFormat("dd/MM/yyy").format(customerList[i].subsExpire!),
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                        fontSize: 11
+                    ),
+                  ),
+                )
+              ],
+            ),
             onTap: (){
-              Navigator.push(context, MaterialPageRoute(builder: (ctx)=>CustomerDetails(customerId: customerList[i].id,)));
+              Navigator.push(context, MaterialPageRoute(builder: (ctx)=>CustomerDetails(customer: customerList[i],)));
             },
           );
         },
         separatorBuilder: (BuildContext context, int index) {
           return const Divider(
-            height: 1,
+            height: .2,
           );
         },
       ),

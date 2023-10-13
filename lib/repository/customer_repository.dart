@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:ncn/model/api/customer_api.dart';
+import 'package:ncn/model/api/subscription_api.dart';
 import 'package:ncn/model/data_class/customer_model.dart';
 import '../config/api-client.dart';
 import '../model/data_class/response_model.dart';
@@ -25,6 +26,14 @@ class CustomerRepository{
     }
     return customerList;
   }
-
+  static Future<double> getCustomerBalance(String customerId) async{
+    double balance = 0.0;
+    var response = await SubscriptionAPI.getBalance(customerId);
+    if(response.statusCode == 200){
+      var data = jsonDecode(response.body);
+      balance = data["balance"].toDouble();
+    }
+    return balance;
+  }
 
 }

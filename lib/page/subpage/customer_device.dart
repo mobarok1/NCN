@@ -1,47 +1,54 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ncn/model/data_class/cg_device.dart';
-import 'package:ncn/model/data_class/customer_model.dart';
-import 'package:ncn/repository/device_subscription_repository.dart';
-import 'package:ncn/utils/constant.dart';
-import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
+import 'package:intl/intl.dart';
+import 'package:ncn/page/subpage/recharge_device.dart';
 
 import '../../model/api/customer_api.dart';
+import '../../model/api/subscription_api.dart';
+import '../../model/data_class/customer_model.dart';
 import '../../model/data_class/response_model.dart';
-import '../device_subscriptions.dart';
+import '../../repository/customer_repository.dart';
+import '../../utils/constant.dart';
 
 class CustomerDevice extends StatefulWidget {
-  final String customerId;
-  const CustomerDevice({super.key,required this.customerId});
+  final CustomerModel customer;
+  final VoidCallback onUpdate;
+  const CustomerDevice({super.key,required this.customer, required this.onUpdate,});
 
   @override
   State<CustomerDevice> createState() => _CustomerDeviceState();
 }
 
 class _CustomerDeviceState extends State<CustomerDevice> {
+  late CustomerModel customer;
   bool loading = false;
-  List<CGDeviceModel> customerDevices = [];
-
-  getCustomerCustomerDevice() async{
+  // getCustomerCustomerDevice() async{
+  //   setState(() {
+  //     loading = true;
+  //   });
+  //   customerDevices = await DeviceSubscriptionRepository.getCustomerDevices(customer.customerId);
+  //   if(!mounted) return;
+  //   setState(() {
+  //     loading = false;
+  //   });
+  // }
+  
+  loadCustomer() async{
     setState(() {
       loading = true;
     });
-    customerDevices = await DeviceSubscriptionRepository.getCustomerDevices(widget.customerId);
-
+    var res = await CustomerRepository.getCustomerDetails(customer.customerId);
+    if(res != null){
+      customer = res;
+    }
     setState(() {
       loading = false;
     });
   }
 
-  addNewDevice(String casID,String stbid,String sn,String note) async{
-    var formData = {
-      "customerid": widget.customerId,
-      "casid": casID,
-      "sn":sn,
-      "stbid":stbid,
-      "note": "",
-    };
+  addNewDevice(formData) async{
+
     setState(() {
       loading = true;
     });
@@ -51,8 +58,8 @@ class _CustomerDeviceState extends State<CustomerDevice> {
     });
     if(response.statusCode==201){
       Fluttertoast.showToast(msg: "Device Added");
-      getCustomerCustomerDevice();
-    }if(response.statusCode==209){
+      loadCustomer();
+    }else if(response.statusCode==209){
       Fluttertoast.showToast(msg: "Device Already Added");
     }else{
       String message = "Failed to Add";
@@ -66,10 +73,56 @@ class _CustomerDeviceState extends State<CustomerDevice> {
     }
   }
 
+  stopSubscription(String deviceId,String articleNumber) async {
+    var formData = {
+      "deviceid": deviceId,
+      "packageArticleNumber": articleNumber
+    };
+    setState(() {
+      loading = true;
+    });
+    ResponseModel response = await SubscriptionAPI.stopPackage(formData);
+    setState(() {
+      loading = false;
+    });
+    if (response.statusCode == 202) {
+      if (!mounted) return;
+      loadCustomer();
+    } else {
+      if (!mounted) return;
+      showDialog(context: context,
+          builder: (ctx) {
+            String message = "Failed to stop subscription";
+            if (response.body != null) {
+              var body = response.body;
+              if (body != "") {
+                message = body;
+              }
+            }
+            return AlertDialog(
+              title: const Text("Message"),
+              content: Text(message),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      loadCustomer();
+                    },
+                    child: const Text("Close")
+                ),
+
+              ],
+            );
+          }
+      );
+    }
+  }
+
   @override
   void initState() {
+    customer = widget.customer;
+    loadCustomer();
     super.initState();
-    getCustomerCustomerDevice();
   }
 
 
@@ -77,104 +130,127 @@ class _CustomerDeviceState extends State<CustomerDevice> {
   Widget build(BuildContext context) {
     return loading?const Center(
       child: CircularProgressIndicator(),
-    ): customerDevices.isNotEmpty?ListView(
-      children: customerDevices.map((e) =>
-         InkWell(
-           onTap: (){
-
-           },
-           child: Card(
-             margin: const EdgeInsets.symmetric(
-               horizontal: 10,
-               vertical: 10
-             ),
-             child:  Padding(
-               padding: const EdgeInsets.all(12),
-               child: Column(
-                 children: [
-                   TextFormField(
-                     initialValue: e.number,
-                     readOnly: true,
-                     decoration: const InputDecoration(
-                       label: Text("CAS ID"),
-                         prefixIcon: Icon(Icons.security)
-                     ),
-                   ),
-                   TextFormField(
-                     initialValue: e.addedTime.toString(),
-                     readOnly: true,
-                     decoration: const InputDecoration(
-                       label: Text("Added On"),
-                       prefixIcon: Icon(Icons.add_alarm)
-
-                     ),
-                   ),
-                   TextFormField(
-                     initialValue: e.note,
-                     readOnly: true,
-                     decoration: const InputDecoration(
-                       label: Text("Note"),
-                       prefixIcon: Icon(Icons.event_note)
-                     ),
-                   ),
-                   const SizedBox(
-                     height: 15,
-                   ),
-                   ElevatedButton.icon(
-                       onPressed: (){
-                         Navigator.push(context, MaterialPageRoute( builder: (ctx)=>DeviceSubscriptions(deviceModel: e, customerId: widget.customerId,)));
-                       },
-                       style: const ButtonStyle(
-                         backgroundColor: MaterialStatePropertyAll(
-                           mainColor
-                         ),
-                       ),
-                       icon: const Icon(Icons.subscriptions,color: Colors.white,size: 18,),
-                       label: const Text("Subscription",
-                          style: TextStyle(
-                            color: Colors.white
-                          ),
-                       )
-                   )
-                 ],
-               ),
-             ),
-           ),
-         )
-
-      ).toList()):Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    ):Column(
       children: [
-        const Text(
-          "No Device Found"
-        ),
-        const SizedBox(
-          height: 25,
-        ),
-        ElevatedButton(
-            onPressed: () async{
-              try{
-                var res = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SimpleBarcodeScannerPage(),
-                    ));
-                res = "CAS-ID:5C:3A:A5:01:AF:EF:BF:E8,STB-ID:540155841,SN:T2209BMC903574";
-                if(res != null){
-                  addNewDevice(res.toString().split(",").first.replaceFirst("CAS-ID:", ""), res.toString().split(",")[1].replaceFirst("STB-ID:", ""),res.toString().split(",")[2].replaceFirst("SN:", ""),"");
-                  if (kDebugMode) {
-                    print(res);
-                  }
-                }else{
-                  Fluttertoast.showToast(msg: "No Code Found");
-                }
+        Flexible(
+          child: loading?const Center(
+            child: CircularProgressIndicator(),
+          ): customer.deviceCASID.isNotEmpty?SingleChildScrollView(
+            child: InkWell(
+              onTap: (){
+              },
+              child: Column(
+                children: [
+                  TextFormField(
+                    initialValue: customer.deviceCASID,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                        label: Text("CAS ID"),
+                        prefixIcon: Icon(Icons.security)
+                    ),
+                  ),
+                  TextFormField(
+                    initialValue:customer.deviceSaleDate!=null? DateFormat("yyyy-MM-dd hh:mm a").format(customer.deviceSaleDate!):"N/A",
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                        label: Text("Added On"),
+                        prefixIcon: Icon(Icons.add_alarm)
 
-              }catch(e){
-                Fluttertoast.showToast(msg: "Failed to scan QR/Bar Code");
-              }
+                    ),
+                  ),
+                  TextFormField(
+                    initialValue: "${customer.boxPrice} (${customer.boxType}) (NetPrice: ${customer.feedBoxPrice})",
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                        label: Text("Box Price"),
+                        prefixIcon: Icon(Icons.shopping_cart)
+                    ),
+                  ),
+                  TextFormField(
+                    initialValue: "${customer.paid} BDT",
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                        label: Text("Box Paid"),
+                        prefixIcon: Icon(Icons.payment)
+                    ),
+                  ),
+                  TextFormField(
+                    initialValue: "${customer.dueAmount} BDT",
+                    readOnly: true,
+                    style: TextStyle(
+                        color: (customer.boxPrice-customer.paid) > 0? Colors.red:Colors.green,
+                        fontWeight: FontWeight.bold
+                    ),
+                    decoration: const InputDecoration(
+                        label: Text("Box Due"),
+                        prefixIcon: Icon(Icons.payment)
+                    ),
+                  ),
+                  TextFormField(
+                    initialValue:customer.subsExpire==null?"N/A": DateFormat("yyyy-MM-dd").format(customer.subsExpire!),
+                    readOnly: true,
+                    style: TextStyle(
+                        color: customer.subsExpire!=null? customer.subsExpire!.isBefore(DateTime.now())?Colors.red:Colors.green:Colors.red,
+                        fontWeight: FontWeight.bold
+                    ),
+                    decoration:  const InputDecoration(
+                        label: Text("Subs. Expire",
+                          style: TextStyle(
 
-            },
-            child: const Text("Add New Device")
+                          ),
+                        ),
+                        prefixIcon: Icon(Icons.timer)
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  ElevatedButton.icon(
+                      onPressed: (){
+                        showDialog(
+                            context: context,
+                            builder: (ctx){
+                              return AlertDialog(
+                                title: const Text("Recharge",
+                                  style: TextStyle(
+
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                content: RechargeDevice(
+                                  customer,
+                                  onRecharge: () {
+                                      loadCustomer();
+                                  },
+                                ),
+                              );
+                            }
+                        );
+                      },
+                      style: const ButtonStyle(
+                          backgroundColor: MaterialStatePropertyAll(
+                              mainColor
+                          ),
+                          padding: MaterialStatePropertyAll(
+                              EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 15
+                              )
+                          )
+                      ),
+                      icon: const Icon(Icons.subscriptions,color: Colors.white,size: 18,),
+                      label: const Text("Renew / Recharge",
+                        style: TextStyle(
+                            color: Colors.white
+                        ),
+                      )
+                  ),
+                ],
+              ),
+            ),
+          ):const Text(
+              "No Device Found"
+          ),
         )
       ],
     );

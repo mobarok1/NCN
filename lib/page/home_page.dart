@@ -23,19 +23,18 @@ class _HomePageState extends State<HomePage> {
         leading: IconButton(
           icon: const Icon(Icons.account_circle_outlined),
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (ctx)=>const AccountPage()));
+            Navigator.push(context, MaterialPageRoute(builder: (ctx)=>const AccountPage(appBar: true,)));
           },
         ),
       ),
       body: IndexedStack(
         index: currentIndex,
-        children: [
-          const Dashboard(),
-          const CustomerList(),
-          Container(
-           
+        children: const [
+          Dashboard(),
+          CustomerList(),
+          AccountPage(
+            appBar: false,
           ),
-          Container(),
         ],
       ),
       bottomNavigationBar: Container(
@@ -65,17 +64,10 @@ class _HomePageState extends State<HomePage> {
                   label: "Customer"
               ),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.person),
-                  label: "Devices"
+                  icon: Icon(Icons.account_circle),
+                  label: "Account"
               ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.battery_saver),
-                  label: "Recharges"
-              ),
-
             ],
-
-
           ),
         ),
       ),

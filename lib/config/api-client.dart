@@ -6,8 +6,8 @@ import '../model/data_class/response_model.dart';
 
 
 class ApiClient{
-  static const serverBaseURL="http://10.0.2.2:8081/";
- // static const serverBaseURL="https://metamicapp.softobit.com/";
+ // static const serverBaseURL="http://192.168.4.102:8081/";
+ static const serverBaseURL="http://api.web3bd.net/";
 
 
   static Future<ResponseModel> postPublic(String endPoint,Map formData) async{
@@ -17,9 +17,12 @@ class ApiClient{
             'content-type':'application/json',
             'Authorization':'Bearer mobarok',
             'x-api-key':'web3@ncn@softobit',
+            'Access-Control-Allow-Origin':'*'
           },
           body: jsonEncode(formData)
       ).timeout(const Duration(seconds: 60));
+
+
       return ResponseModel(
           success: true,
           message: "SUCCESS",

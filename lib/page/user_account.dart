@@ -1,16 +1,20 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:ncn/model/api/customer_api.dart';
+import 'package:ncn/model/data_class/summery.dart';
 import 'package:ncn/model/data_class/user_model.dart';
 import '../main.dart';
 import '../model/data_class/response_model.dart';
+import '../repository/customer_repository.dart';
+import '../repository/report_repository.dart';
 import '../utils/constant.dart';
 import '../utils/shared_pref_manager.dart';
 import '../utils/text_style.dart';
 import 'login.dart';
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({Key? key}) : super(key: key);
+  final bool appBar;
+  const AccountPage({Key? key, required this.appBar}) : super(key: key);
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -18,58 +22,65 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   bool loading = false;
+  double balance = 0;
 
-  void loadUserProfile() async{
+  getCustomerBalance() async{
     setState(() {
       loading = true;
     });
-    ResponseModel responseModel = await CustomerAPI.userData();
+    var report = await SummeryReportRepository.getSummery(userDataModel!.netId);
+    if(report!=null){
+      balance = report.balance;
+    }
     setState(() {
       loading = false;
     });
-
-    if(responseModel.statusCode==200){
-      userDataModel = UserModel.fromJSON(jsonDecode(responseModel.body));
-      setState(() {
-
-      });
-    }else{
-      if(!mounted) return;
-      showDialog(context: context,
-          builder: (ctx){
-            return  AlertDialog(
-              title: const Text("Message"),
-              content: const Text("Failed to load user information. contact with support"),
-              actions: [
-                TextButton(
-                    onPressed: (){
-                      Navigator.pop(context);
-                    },
-                    child: const Text("Close")
-                ),
-
-              ],
-            );
-          }
-      );
-    }
-
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getCustomerBalance();
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: widget.appBar? AppBar(
         title: const Text("My Account"),
         centerTitle: true,
-      ),
+      ):null,
       body: Stack(
         children: [
-          if (userDataModel==null) const Center(
+          loading?const Center(child: CircularProgressIndicator(),):
+          userDataModel==null? const Center(
             child: Text("Failed to load information"),
-          ) else SingleChildScrollView(
+          ) : SingleChildScrollView(
             child: Column(
               children: [
+                const SizedBox(
+                  height: 15,
+                ),
+                Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.rectangle,
+                    border: Border.all(
+                      color: Colors.black38
+                    ),
+                    borderRadius: BorderRadius.circular(20)
+                  ),
+                  height: 100,
+                  width: 200,
+                  child:  Text("Balance\n$balance BDT",
+                    style: const TextStyle(
+                      fontSize: 17,
+                      color: mainColor,
+                      fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
                 const SizedBox(
                   height: 10,
                 ),

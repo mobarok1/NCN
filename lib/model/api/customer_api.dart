@@ -5,6 +5,9 @@ class CustomerAPI{
   static Future<ResponseModel> addNewCustomer(formData) async{
     return await ApiClient.post("customer",formData);
   }
+  static Future<ResponseModel> updateCustomer(formData) async{
+    return await ApiClient.patch("customer",formData);
+  }
   static Future<ResponseModel> addNewCustomerDevice(formData) async{
     return await ApiClient.post("customer/device",formData);
   }
@@ -23,4 +26,9 @@ class CustomerAPI{
   static Future<ResponseModel> updatePassword(formData) async{
     return await ApiClient.patch("user/update/password",formData);
   }
+
+  static Future<ResponseModel> getFeedReport(int id) async{
+    return await ApiClient.get("report/feed/summery/$id");
+  }
+
 }

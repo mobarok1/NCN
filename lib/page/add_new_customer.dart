@@ -2,14 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:ncn/model/api/customer_api.dart';
-import 'package:ncn/model/data_class/area_model.dart';
 import 'package:ncn/page/customer_details.dart';
 import 'package:ncn/utils/constant.dart';
 
-import '../model/data_class/network_model.dart';
+import '../model/data_class/customer_model.dart';
 import '../model/data_class/response_model.dart';
-import '../repository/network_repository.dart';
-
+import '../repository/customer_repository.dart';
 class AddCustomer extends StatefulWidget {
   const AddCustomer({super.key});
 
@@ -45,7 +43,11 @@ class _AddCustomerState extends State<AddCustomer> {
       var body = response.body;
       if(body!=""){
         String id = jsonDecode(body)["userId"].toString();
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => CustomerDetails(customerId:id )));
+        CustomerModel? customerModel = await CustomerRepository.getCustomerDetails(id);
+        if(!mounted) return;
+        if(customerModel!=null){
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => CustomerDetails(customer: customerModel, )));
+        }
 
       }else{
           Navigator.pop(context);
